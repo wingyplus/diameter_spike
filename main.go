@@ -20,6 +20,10 @@ func (hmr *HMR) AVP() []*diam.AVP {
 	}
 }
 
+type HMA struct {
+	SessionID string `avp:"Session-Id"`
+}
+
 type Query struct {
 	in chan diameter.Session
 }
@@ -28,13 +32,15 @@ func (q *Query) Handler(w rest.ResponseWriter, r *rest.Request) {
 	id := r.PathParam("id")
 	out := make(chan diameter.Data)
 	q.in <- diameter.Session{ID: id, OutChan: out, Request: &HMR{AccountCode: 555}}
+	var hma HMA
 	select {
 	case d := <-out:
 		if d.Err != nil {
 			w.WriteJson(d.Err)
 			return
 		}
-		w.WriteJson(d.Response)
+		d.Response.Unmarshal(&hma)
+		w.WriteJson(hma)
 	}
 }
 

@@ -23,12 +23,12 @@ type Session struct {
 }
 
 type Data struct {
-	Response Response
+	Response *Response
 	Err      error
 }
 
 type Response struct {
-	SessionID datatype.UTF8String `avp:"Session-Id"`
+	*diam.Message
 }
 
 func BackgroundClient() chan Session {
@@ -118,9 +118,6 @@ func sendHMR(conn diam.Conn, cfg *sm.Settings, sess Session) error {
 
 func handleHMA(done chan Data) diam.HandlerFunc {
 	return func(c diam.Conn, m *diam.Message) {
-		// log.Printf("Received HMA from %s\n%s", c.RemoteAddr(), m)
-		var resp Response
-		m.Unmarshal(&resp)
-		done <- Data{Response: resp}
+		done <- Data{Response: &Response{Message: m}}
 	}
 }
