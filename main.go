@@ -43,20 +43,20 @@ var helloDictionary = xml.Header + `
 `
 
 type Query struct {
-	in  chan session
-	out chan data
+	in chan session
 }
 
 type session struct {
-	id string
+	id  string
+	out chan data
 }
 
 func (q *Query) Handler(w rest.ResponseWriter, r *rest.Request) {
 	id := r.PathParam("id")
-	log.Println(id)
-	q.in <- session{id: id}
+	out := make(chan data)
+	q.in <- session{id: id, out: out}
 	select {
-	case d := <-q.out:
+	case d := <-out:
 		if d.err != nil {
 			w.WriteJson(d.err)
 			return
@@ -66,13 +66,14 @@ func (q *Query) Handler(w rest.ResponseWriter, r *rest.Request) {
 }
 
 func main() {
-	inCh, outCh := backgroundClient()
+	inCh := backgroundClient()
 
-	q := &Query{inCh, outCh}
+	q := &Query{inCh}
 
 	router, _ := rest.MakeRouter(rest.Get("/q/:id", q.Handler))
 
 	api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
 	api.SetApp(router)
 
 	http.ListenAndServe(":8080", api.MakeHandler())
@@ -83,9 +84,8 @@ type data struct {
 	err      error
 }
 
-func backgroundClient() (in chan session, out chan data) {
-	out = make(chan data, 1000)
-	in = make(chan session, 1000)
+func backgroundClient() chan session {
+	in := make(chan session, 1000)
 
 	dict.Default.Load(bytes.NewBufferString(helloDictionary))
 	cfg := &sm.Settings{
@@ -124,18 +124,18 @@ func backgroundClient() (in chan session, out chan data) {
 			case sess := <-in:
 				err := sendHMR(conn, cfg, sess)
 				if err != nil {
-					out <- data{err: err}
+					sess.out <- data{err: err}
 				}
 
 				select {
 				case d := <-done:
-					out <- data{response: d.response, err: err}
+					sess.out <- data{response: d.response, err: err}
 				}
 
 			}
 		}
 	}()
-	return in, out
+	return in
 }
 
 func sendHMR(conn diam.Conn, cfg *sm.Settings, sess session) error {
@@ -163,7 +163,7 @@ type response struct {
 
 func handleHMA(done chan data) diam.HandlerFunc {
 	return func(c diam.Conn, m *diam.Message) {
-		log.Printf("Received HMA from %s\n%s", c.RemoteAddr(), m)
+		// log.Printf("Received HMA from %s\n%s", c.RemoteAddr(), m)
 		var resp response
 		m.Unmarshal(&resp)
 		done <- data{response: resp}

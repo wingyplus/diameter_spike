@@ -4,34 +4,31 @@ import (
 	"encoding/json"
 	"math/rand"
 	"net/http"
-	"net/http/httptest"
 	"strconv"
 	"sync"
 	"testing"
-
-	"github.com/ant0ine/go-json-rest/rest"
 )
 
 func TestQ(t *testing.T) {
-	in, out := backgroundClient()
-	q := &Query{in, out}
+	// in := backgroundClient()
+	// q := &Query{in}
+	//
+	// router, _ := rest.MakeRouter(rest.Get("/q/:id", q.Handler))
+	//
+	// api := rest.NewApi()
+	// api.Use(rest.DefaultDevStack...)
+	// api.SetApp(router)
+	//
+	// ts := httptest.NewServer(api.MakeHandler())
+	// defer ts.Close()
 
-	router, _ := rest.MakeRouter(rest.Get("/q/:id", q.Handler))
-
-	api := rest.NewApi()
-	api.Use(rest.DefaultDevStack...)
-	api.SetApp(router)
-
-	ts := httptest.NewServer(api.MakeHandler())
-	defer ts.Close()
-
-	loop := 1000
+	loop := 3000
 
 	var wg sync.WaitGroup
 	wg.Add(loop)
 
 	for i := 0; i < loop; i++ {
-		go testSessionID(t, ts.URL, strconv.Itoa(int(rand.Uint32())), &wg)
+		go testSessionID(t, "http://localhost:8080", strconv.Itoa(int(rand.Uint32())), &wg)
 	}
 
 	wg.Wait()
