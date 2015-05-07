@@ -22,7 +22,7 @@ func TestQ(t *testing.T) {
 	// ts := httptest.NewServer(api.MakeHandler())
 	// defer ts.Close()
 
-	loop := 3000
+	loop := 1000
 
 	var wg sync.WaitGroup
 	wg.Add(loop)
