@@ -19,6 +19,7 @@ import (
 type Session struct {
 	ID      string
 	OutChan chan Data
+	Request Request
 }
 
 type Data struct {
@@ -84,6 +85,10 @@ func BackgroundClient() chan Session {
 	return in
 }
 
+type Request interface {
+	AVP() []*diam.AVP
+}
+
 func sendHMR(conn diam.Conn, cfg *sm.Settings, sess Session) error {
 	var (
 		commandCode uint32 = 111
@@ -101,8 +106,11 @@ func sendHMR(conn diam.Conn, cfg *sm.Settings, sess Session) error {
 	m.NewAVP(avp.OriginHost, avp.Mbit, 0, cfg.OriginHost)
 	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
 	m.NewAVP(avp.DestinationRealm, avp.Mbit, 0, meta.OriginRealm)
-	m.NewAVP(avp.DestinationHost, avp.Mbit, 0, meta.OriginHost)
 	m.NewAVP(avp.UserName, avp.Mbit, 0, datatype.UTF8String("foobar"))
+	m.NewAVP(avp.DestinationHost, avp.Mbit, 0, meta.OriginHost)
+
+	m.AddAVP(sess.Request.AVP()[0])
+
 	_, err := m.WriteTo(conn)
 
 	return err
