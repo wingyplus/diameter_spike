@@ -53,6 +53,9 @@ func BackgroundClient() chan Session {
 	done := make(chan Data)
 
 	diam.HandleFunc("CEA", handleCEA(done))
+	diam.HandleFunc("DWA", func(c diam.Conn, m *diam.Message) {
+		fmt.Println(m)
+	})
 
 	conn, err := diam.Dial(dtnAddr, nil, nil)
 	if err != nil {
@@ -64,11 +67,29 @@ func BackgroundClient() chan Session {
 	data := <-done
 	fmt.Printf("%v\n", data.Response.Message)
 
+	sendDWR(conn, cfg)
+
 	return in
 }
 
 type Request interface {
 	AVP() []*diam.AVP
+}
+
+func sendDWR(conn diam.Conn, cfg *sm.Settings) error {
+	var (
+		watchdogExchange uint32 = 280
+		appID                uint32 = 0
+	)
+
+	m := diam.NewRequest(watchdogExchange, appID, nil)
+
+	m.NewAVP(avp.OriginHost, avp.Mbit, 0, cfg.OriginHost)
+	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
+
+	_, err := m.WriteTo(conn)
+
+	return err
 }
 
 func sendCER(conn diam.Conn, cfg *sm.Settings) error {
@@ -88,7 +109,6 @@ func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 	m.NewAVP(avp.ProductName, 0, 0, productName)
 	m.NewAVP(avp.SupportedVendorID, avp.Mbit, 0, datatype.Unsigned32(0))
 	m.NewAVP(avp.AuthApplicationID, avp.Mbit, 0, datatype.Unsigned32(4))
-	// m.NewAVP(avp.OriginStateID, avp.Mbit, 0, datatype.Unsigned32(0))
 	m.NewAVP(avp.AcctApplicationID, avp.Mbit, 0, datatype.Unsigned32(4))
 	m.NewAVP(avp.FirmwareRevision, avp.Mbit, 0, cfg.FirmwareRevision)
 
