@@ -73,6 +73,11 @@ func BackgroundClient() chan Session {
 		ccadone <- Data{Response: &Response{Message: m}}
 	})
 
+	// TODO: answer watchdog from server.
+	diam.HandleFunc("ALL", func(c diam.Conn, m *diam.Message) {
+		fmt.Println(m)
+	})
+
 	conn, err := diam.Dial(dtnAddr, nil, nil)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -85,13 +90,20 @@ func BackgroundClient() chan Session {
 
 	sendDWR(conn, cfg)
 
-	sendCCR(conn, cfg)
-	select {
-	case <-ccadone:
-		fmt.Println("cca done")
-	case err := <-diam.ErrorReports():
-		fmt.Println(err)
-	}
+	go func() {
+		for {
+			select {
+			case sess := <-in:
+				sendCCR(conn, cfg, sess.Request)
+				select {
+				case d := <-ccadone:
+					sess.OutChan <- d
+				}
+			case err := <-diam.ErrorReports():
+				fmt.Println(err)
+			}
+		}
+	}()
 
 	return in
 }
@@ -108,7 +120,7 @@ const (
 	CallingPartyAddress = 20336
 )
 
-func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
+func sendCCR(conn diam.Conn, cfg *sm.Settings, req Request) error {
 	var (
 		// balanceExchange uint32 = 272
 		appID uint32 = 4
@@ -125,12 +137,6 @@ func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
 	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
 
 	m.NewAVP(avp.CCRequestType, avp.Mbit, 0, datatype.Integer32(4))
-	m.NewAVP(avp.SubscriptionID, avp.Mbit, 0, &diam.GroupedAVP{
-		AVP: []*diam.AVP{
-			diam.NewAVP(avp.SubscriptionIDType, avp.Mbit, 0, datatype.Integer32(0)),
-			diam.NewAVP(avp.SubscriptionIDData, avp.Mbit, 0, datatype.UTF8String(dtn)),
-		},
-	})
 	m.NewAVP(avp.ServiceContextID, avp.Mbit, 0, datatype.UTF8String("QueryBalance@huawei.com"))
 	m.NewAVP(avp.RequestedAction, avp.Mbit, 0, datatype.Integer32(2))
 	m.NewAVP(avp.EventTimestamp, avp.Mbit, 0, datatype.Time(time.Now()))
@@ -138,18 +144,10 @@ func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
 	m.NewAVP(avp.CCRequestNumber, avp.Mbit, 0, datatype.Unsigned32(0))
 	m.NewAVP(avp.RouteRecord, avp.Mbit, 0, datatype.OctetString("10.89.111.40"))
 	m.NewAVP(avp.DestinationHost, avp.Mbit, 0, datatype.OctetString("cbp211"))
-	m.NewAVP(avp.ServiceInformation, avp.Mbit, 0, &diam.GroupedAVP{
-		AVP: []*diam.AVP{
-			diam.NewAVP(BalanceInformation, avp.Mbit, 0, &diam.GroupedAVP{
-				AVP: []*diam.AVP{
-					diam.NewAVP(CallingPartyAddress, avp.Mbit, 0, datatype.UTF8String(dtn)),
-					diam.NewAVP(AccessMethod, avp.Mbit, 0, datatype.Unsigned32(9)),
-					diam.NewAVP(AccountQueryMethod, avp.Mbit, 0, datatype.Unsigned32(1)),
-					diam.NewAVP(SSPTime, avp.Mbit, 0, datatype.Time(time.Now())),
-				},
-			}),
-		},
-	})
+
+	for _, avp := range req.AVP() {
+		m.AddAVP(avp)
+	}
 
 	fmt.Println(m)
 	n, err := m.WriteTo(conn)
