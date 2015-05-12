@@ -100,6 +100,14 @@ type Request interface {
 	AVP() []*diam.AVP
 }
 
+const (
+	BalanceInformation  = 21100
+	AccessMethod        = 20340
+	AccountQueryMethod  = 20346
+	SSPTime             = 20386
+	CallingPartyAddress = 20336
+)
+
 func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
 	var (
 		// balanceExchange uint32 = 272
@@ -132,12 +140,12 @@ func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
 	m.NewAVP(avp.DestinationHost, avp.Mbit, 0, datatype.OctetString("cbp211"))
 	m.NewAVP(avp.ServiceInformation, avp.Mbit, 0, &diam.GroupedAVP{
 		AVP: []*diam.AVP{
-			diam.NewAVP(21100, avp.Mbit, 0, &diam.GroupedAVP{
+			diam.NewAVP(BalanceInformation, avp.Mbit, 0, &diam.GroupedAVP{
 				AVP: []*diam.AVP{
-					diam.NewAVP(20336, avp.Mbit, 0, datatype.UTF8String(dtn)),
-					diam.NewAVP(20340, avp.Mbit, 0, datatype.Unsigned32(9)),
-					diam.NewAVP(20346, avp.Mbit, 0, datatype.Unsigned32(1)),
-					diam.NewAVP(20386, avp.Mbit, 0, datatype.Time(time.Now())),
+					diam.NewAVP(CallingPartyAddress, avp.Mbit, 0, datatype.UTF8String(dtn)),
+					diam.NewAVP(AccessMethod, avp.Mbit, 0, datatype.Unsigned32(9)),
+					diam.NewAVP(AccountQueryMethod, avp.Mbit, 0, datatype.Unsigned32(1)),
+					diam.NewAVP(SSPTime, avp.Mbit, 0, datatype.Time(time.Now())),
 				},
 			}),
 		},
@@ -155,7 +163,7 @@ func sendCCR(conn diam.Conn, cfg *sm.Settings) error {
 func sendDWR(conn diam.Conn, cfg *sm.Settings) error {
 	var (
 		watchdogExchange uint32 = 280
-		appID            uint32 = 0
+		appID            uint32
 	)
 
 	m := diam.NewRequest(watchdogExchange, appID, nil)
