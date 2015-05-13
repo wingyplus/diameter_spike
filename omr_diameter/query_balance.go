@@ -87,7 +87,3 @@ type Data interface {
 type Response interface {
 	Unmarshal(v interface{}) error
 }
-
-type DiameterClient interface {
-	Run() chan Request
-}
