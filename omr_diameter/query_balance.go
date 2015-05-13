@@ -28,7 +28,7 @@ type QueryBalancer struct{}
 
 func (q *QueryBalancer) Retrieve(number SubscriberNumber) BalanceInformation {
 	out := make(chan Response)
-	in <- Request{out: out}
+	in <- Request{out: out, data: &QueryBalanceData{Number: number, Time: time.Now()}}
 	resp := <-out
 	var diamResponse DiamResponse
 	resp.Unmarshal(&diamResponse)

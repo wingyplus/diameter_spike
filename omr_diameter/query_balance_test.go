@@ -14,17 +14,26 @@ import (
 
 type mockDiameterClient struct {
 	fn func(out chan Response)
+	t  *testing.T
 }
 
 func (m *mockDiameterClient) Run() {
 	request := <-in
+	if data, ok := request.data.(*QueryBalanceData); ok {
+		if data.Number == "" {
+			m.t.Error("expect number is not empty")
+		}
+	} else {
+		m.t.Error("expect data should be QueryBalanceData")
+	}
 	m.fn(request.out)
 }
 
-func newClient(fn func(out chan Response)) *mockDiameterClient {
+func newClient(t *testing.T, fn func(out chan Response)) *mockDiameterClient {
 	in = make(chan Request)
 	return &mockDiameterClient{
 		fn: fn,
+		t:  t,
 	}
 }
 
@@ -46,7 +55,7 @@ func (resp *mockResponse) Unmarshal(v interface{}) error {
 
 func TestBalancerUnmarshalResponseFromDiameterClient(t *testing.T) {
 	balancer := &QueryBalancer{}
-	diameterClient := newClient(func(out chan Response) {
+	diameterClient := newClient(t, func(out chan Response) {
 		out <- &mockResponse{
 			Result: "20150501",
 		}
@@ -63,7 +72,7 @@ func TestBalancerUnmarshalResponseFromDiameterClient(t *testing.T) {
 
 func TestBalancerCallDiameterClient(t *testing.T) {
 	balancer := &QueryBalancer{}
-	diameterClient := newClient(func(out chan Response) {
+	diameterClient := newClient(t, func(out chan Response) {
 		out <- &mockResponse{
 			Result: "20150101",
 		}
