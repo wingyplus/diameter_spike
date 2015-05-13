@@ -189,6 +189,7 @@ func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 	m.NewAVP(avp.HostIPAddress, avp.Mbit, 0, datatype.Address(net.ParseIP(ip)))
 	m.NewAVP(avp.VendorID, avp.Mbit, 0, vendorID)
 	m.NewAVP(avp.ProductName, 0, 0, productName)
+	m.NewAVP(avp.OriginStateID, avp.Mbit, 0, datatype.Unsigned32(0))
 	m.NewAVP(avp.SupportedVendorID, avp.Mbit, 0, datatype.Unsigned32(0))
 	m.NewAVP(avp.AuthApplicationID, avp.Mbit, 0, datatype.Unsigned32(4))
 	m.NewAVP(avp.AcctApplicationID, avp.Mbit, 0, datatype.Unsigned32(4))
