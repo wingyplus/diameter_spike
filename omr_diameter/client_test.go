@@ -15,14 +15,21 @@ import (
 	"github.com/wingyplus/diameter_spike/diameter/dictionary"
 )
 
-func TestClientCallCER(t *testing.T) {
+func newServer() (*diamtest.Server, chan error) {
 	errc := make(chan error, 1)
+
+	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
+	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
 
 	smux := diam.NewServeMux()
 	smux.Handle("CER", handleCER(errc))
 	smux.Handle("CCR", handleCCR(errc))
 
-	srv := diamtest.NewServer(smux, nil)
+	return diamtest.NewServer(smux, dict.Default), errc
+}
+
+func TestClientCallCER(t *testing.T) {
+	srv, errc := newServer()
 	defer srv.Close()
 
 	client := &DiameterClient{
@@ -77,16 +84,7 @@ func sendCEA(w io.Writer, m *diam.Message, OriginStateID, AcctApplicationID *dia
 }
 
 func TestClientCallCCR(t *testing.T) {
-	errc := make(chan error, 1)
-
-	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
-	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
-
-	smux := diam.NewServeMux()
-	smux.Handle("CER", handleCER(errc))
-	smux.Handle("CCR", handleCCR(errc))
-
-	srv := diamtest.NewServer(smux, dict.Default)
+	srv, errc := newServer()
 	defer srv.Close()
 
 	client := &DiameterClient{
@@ -125,8 +123,6 @@ func TestClientCallCCR(t *testing.T) {
 			t.Errorf("expect %s but got %s", expected, sessionId)
 		}
 	case err := <-errc:
-		t.Error(err)
-	case err := <-smux.ErrorReports():
 		t.Error(err)
 	}
 }
