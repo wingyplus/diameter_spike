@@ -13,6 +13,7 @@ type Balancer interface {
 }
 
 type DiamResponse struct {
+	SessionID          string `avp:"Session-Id"`
 	ServiceInformation ServiceInformation
 }
 
@@ -34,8 +35,6 @@ func (q *QueryBalancer) Retrieve(number SubscriberNumber) BalanceInformation {
 	resp.Unmarshal(&diamResponse)
 	return diamResponse.ServiceInformation.BalanceInformation
 }
-
-var in chan Request
 
 type Request struct {
 	out  chan Response
