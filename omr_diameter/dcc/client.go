@@ -62,8 +62,8 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 	ccadone := make(chan Answer)
 
 	smux := diam.NewServeMux()
-	smux.HandleFunc("CEA", handleCEA(done))
-	smux.HandleFunc("CCA", handleCCA(ccadone))
+	smux.Handle("CEA", handleCEA(done))
+	smux.Handle("CCA", handleCCA(ccadone))
 
 	conn, err := diam.Dial(client.Endpoint, smux, nil)
 	if err != nil {
