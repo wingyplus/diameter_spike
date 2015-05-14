@@ -20,6 +20,7 @@ func TestClientCallCER(t *testing.T) {
 
 	smux := diam.NewServeMux()
 	smux.Handle("CER", handleCER(errc))
+	smux.Handle("CCR", handleCCR(errc))
 
 	srv := diamtest.NewServer(smux, nil)
 	defer srv.Close()
