@@ -20,6 +20,19 @@ type DiameterClient struct {
 	Endpoint string
 }
 
+type Request struct {
+	out  chan Response
+	data Data
+}
+
+type Data interface {
+	AVP() []*diam.AVP
+}
+
+type Response interface {
+	Unmarshal(v interface{}) error
+}
+
 const (
 	identity    = datatype.DiameterIdentity("jenkin13_OMR_TEST01")
 	realm       = datatype.DiameterIdentity("dtac.co.th")

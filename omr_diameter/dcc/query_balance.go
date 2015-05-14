@@ -36,11 +36,6 @@ func (q *QueryBalancer) Retrieve(number SubscriberNumber) BalanceInformation {
 	return diamResponse.ServiceInformation.BalanceInformation
 }
 
-type Request struct {
-	out  chan Response
-	data Data
-}
-
 type QueryBalanceData struct {
 	Number SubscriberNumber
 	Time   time.Time
@@ -77,12 +72,4 @@ func (d *QueryBalanceData) AVP() []*diam.AVP {
 			},
 		}),
 	}
-}
-
-type Data interface {
-	AVP() []*diam.AVP
-}
-
-type Response interface {
-	Unmarshal(v interface{}) error
 }
