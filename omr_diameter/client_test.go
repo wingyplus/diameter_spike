@@ -15,61 +15,6 @@ import (
 	"github.com/wingyplus/diameter_spike/diameter/dictionary"
 )
 
-func TestClientCallCCR(t *testing.T) {
-	errc := make(chan error, 1)
-
-	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
-	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
-
-	smux := diam.NewServeMux()
-	smux.Handle("CER", handleCER(errc))
-	smux.Handle("CCR", handleCCR(errc))
-
-	srv := diamtest.NewServer(smux, dict.Default)
-	defer srv.Close()
-
-	client := &DiameterClient{
-		Endpoint: srv.Address,
-	}
-	done, err := client.Run()
-	if err != nil {
-		t.Error("Cannot connect to server")
-		return
-	}
-	select {
-	case err := <-errc:
-		t.Error(err)
-		return
-	case <-done:
-
-	}
-
-	out := make(chan Response)
-	number := SubscriberNumber("66814060967")
-	currentTime := time.Now()
-	request := Request{out: out, data: &QueryBalanceData{Number: number, Time: currentTime}}
-
-	in <- request
-	select {
-	case response := <-out:
-		var diamResponse DiamResponse
-		err = response.Unmarshal(&diamResponse)
-		if err != nil {
-			t.Error(err)
-		}
-		expected := "dtac.co.th;OMR200601021504050000"
-
-		sessionId := diamResponse.SessionID
-		if sessionId != expected {
-			t.Errorf("expect %s but got %s", expected, sessionId)
-		}
-	case err := <-errc:
-		t.Error(err)
-	case err := <-smux.ErrorReports():
-		t.Error(err)
-	}
-}
-
 func TestClientCallCER(t *testing.T) {
 	errc := make(chan error, 1)
 
@@ -128,6 +73,61 @@ func sendCEA(w io.Writer, m *diam.Message, OriginStateID, AcctApplicationID *dia
 	m.AddAVP(OriginStateID)
 	m.AddAVP(AcctApplicationID)
 	return m.WriteTo(w)
+}
+
+func TestClientCallCCR(t *testing.T) {
+	errc := make(chan error, 1)
+
+	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
+	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
+
+	smux := diam.NewServeMux()
+	smux.Handle("CER", handleCER(errc))
+	smux.Handle("CCR", handleCCR(errc))
+
+	srv := diamtest.NewServer(smux, dict.Default)
+	defer srv.Close()
+
+	client := &DiameterClient{
+		Endpoint: srv.Address,
+	}
+	done, err := client.Run()
+	if err != nil {
+		t.Error("Cannot connect to server")
+		return
+	}
+	select {
+	case err := <-errc:
+		t.Error(err)
+		return
+	case <-done:
+
+	}
+
+	out := make(chan Response)
+	number := SubscriberNumber("66814060967")
+	currentTime := time.Now()
+	request := Request{out: out, data: &QueryBalanceData{Number: number, Time: currentTime}}
+
+	in <- request
+	select {
+	case response := <-out:
+		var diamResponse DiamResponse
+		err = response.Unmarshal(&diamResponse)
+		if err != nil {
+			t.Error(err)
+		}
+		expected := "dtac.co.th;OMR200601021504050000"
+
+		sessionId := diamResponse.SessionID
+		if sessionId != expected {
+			t.Errorf("expect %s but got %s", expected, sessionId)
+		}
+	case err := <-errc:
+		t.Error(err)
+	case err := <-smux.ErrorReports():
+		t.Error(err)
+	}
 }
 
 type CCR struct {
