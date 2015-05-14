@@ -5,17 +5,18 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/ant0ine/go-json-rest/rest/test"
+	"github.com/wingyplus/diameter_spike/omr_diameter/dcc"
 )
 
 type mockQueryBalancer struct{}
 
-func (m *mockQueryBalancer) Retrieve(number SubscriberNumber) BalanceInformation {
+func (m *mockQueryBalancer) Retrieve(number dcc.SubscriberNumber) dcc.BalanceInformation {
 	if number == "66949014731" {
-		return BalanceInformation{
+		return dcc.BalanceInformation{
 			FirstActiveDate: "20150201",
 		}
 	}
-	return BalanceInformation{
+	return dcc.BalanceInformation{
 		FirstActiveDate: "20150501",
 	}
 }
