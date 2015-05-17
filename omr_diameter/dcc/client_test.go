@@ -20,11 +20,12 @@ func newServer() (*diamtest.Server, chan error) {
 	smux := diam.NewServeMux()
 	smux.Handle("CER", handleCER(errc))
 	smux.Handle("CCR", handleCCR(errc))
+	smux.Handle("DWR", handleDWR(errc))
 
 	return diamtest.NewServer(smux, dict.Default), errc
 }
 
-func TestClientCallCER(t *testing.T) {
+func TestClientCallCERAndDWR(t *testing.T) {
 	srv, errc := newServer()
 	defer srv.Close()
 
@@ -36,10 +37,14 @@ func TestClientCallCER(t *testing.T) {
 		t.Error("Cannot connect to server")
 		return
 	}
-	select {
-	case err := <-errc:
-		t.Error(err)
-	case <-done:
+	for i := 0; i < 2; {
+		select {
+		case err := <-errc:
+			t.Error(err)
+			return
+		case <-done:
+			i++
+		}
 	}
 }
 
