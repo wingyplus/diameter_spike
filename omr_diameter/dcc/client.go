@@ -100,7 +100,7 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 	var (
 		capabilitiesExchange uint32 = 257
-		appID                uint32 = 0
+		appID                uint32
 	)
 
 	m := diam.NewRequest(capabilitiesExchange, appID, nil)
