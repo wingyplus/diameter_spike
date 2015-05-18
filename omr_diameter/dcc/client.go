@@ -63,6 +63,7 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 
 	smux := diam.NewServeMux()
 	smux.Handle("CEA", handleCEA(done))
+	smux.Handle("DWA", handleDWA(done))
 	smux.Handle("CCA", handleCCA(ccadone))
 
 	conn, err := diam.Dial(client.Endpoint, smux, nil)
@@ -70,6 +71,11 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 		return nil, err
 	}
 	err = sendCER(conn, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sendDWR(conn, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +100,7 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 	var (
 		capabilitiesExchange uint32 = 257
-		appID                uint32 = 0
+		appID                uint32
 	)
 
 	m := diam.NewRequest(capabilitiesExchange, appID, nil)
@@ -116,7 +122,26 @@ func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 	return err
 }
 
+func sendDWR(conn diam.Conn, cfg *sm.Settings) error {
+	var (
+		wathdogExchange uint32 = 280
+		appID           uint32 = 0
+	)
+	m := diam.NewRequest(wathdogExchange, appID, nil)
+	m.NewAVP(avp.OriginHost, avp.Mbit, 0, cfg.OriginHost)
+	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
+
+	_, err := m.WriteTo(conn)
+	return err
+}
+
 func handleCEA(done chan struct{}) diam.HandlerFunc {
+	return func(conn diam.Conn, m *diam.Message) {
+		done <- struct{}{}
+	}
+}
+
+func handleDWA(done chan struct{}) diam.HandlerFunc {
 	return func(conn diam.Conn, m *diam.Message) {
 		done <- struct{}{}
 	}
