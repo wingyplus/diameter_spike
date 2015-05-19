@@ -8,7 +8,7 @@ import (
 	"github.com/fiorix/go-diameter/diam/datatype"
 )
 
-func handleDWR(errc chan error) diam.HandlerFunc {
+func serverHandleDWR(errc chan error) diam.HandlerFunc {
 	type DWR struct {
 		OriginHost  string `avp:"Origin-Host"`
 		OriginRealm string `avp:"Origin-Realm"`

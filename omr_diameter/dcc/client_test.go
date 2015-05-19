@@ -18,9 +18,9 @@ func newServer() (*diamtest.Server, chan error) {
 	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
 
 	smux := diam.NewServeMux()
-	smux.Handle("CER", handleCER(errc))
-	smux.Handle("CCR", handleCCR(errc))
-	smux.Handle("DWR", handleDWR(errc))
+	smux.Handle("CER", serverHandleCER(errc))
+	smux.Handle("CCR", serverHandleCCR(errc))
+	smux.Handle("DWR", serverHandleDWR(errc))
 
 	return diamtest.NewServer(smux, dict.Default), errc
 }

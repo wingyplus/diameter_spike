@@ -22,7 +22,7 @@ type CCR struct {
 	DestinationHost   *diam.AVP `avp:"Destination-Host"`
 }
 
-func handleCCR(errc chan error) diam.HandlerFunc {
+func serverHandleCCR(errc chan error) diam.HandlerFunc {
 	return func(c diam.Conn, m *diam.Message) {
 		var req CCR
 		err := m.Unmarshal(&req)
