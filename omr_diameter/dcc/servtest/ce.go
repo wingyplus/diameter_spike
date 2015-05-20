@@ -1,4 +1,4 @@
-package dcc
+package servtest
 
 import (
 	"io"
@@ -9,7 +9,7 @@ import (
 	"github.com/fiorix/go-diameter/diam/datatype"
 )
 
-func serverHandleCER(errc chan error, serv *server) diam.HandlerFunc {
+func serverHandleCER(errc chan error, serv *Server) diam.HandlerFunc {
 	type CER struct {
 		OriginHost        string    `avp:"Origin-Host"`
 		OriginRealm       string    `avp:"Origin-Realm"`

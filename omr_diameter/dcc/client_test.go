@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/fiorix/go-diameter/diam"
+	"github.com/wingyplus/diameter_spike/omr_diameter/dcc/servtest"
 )
 
 var dwach = make(chan *diam.Message)
 
 func TestClientCallCERAndDWR(t *testing.T) {
-	srv, errc := newServer()
+	srv, errc := servtest.NewServer()
 	defer srv.Close()
 
 	client := &DiameterClient{
@@ -33,7 +34,7 @@ func TestClientCallCERAndDWR(t *testing.T) {
 }
 
 func TestClientCallCCR(t *testing.T) {
-	srv, errc := newServer()
+	srv, errc := servtest.NewServer()
 	defer srv.Close()
 
 	client := &DiameterClient{
@@ -78,7 +79,7 @@ func TestClientCallCCR(t *testing.T) {
 // TODO: DWR has a problem, It's hangup when server send DWR and client send DWA back.
 //
 // func TestClient_DWR(t *testing.T) {
-// 	srv, errc := newServer()
+// 	srv, errc := servtest.NewServer()
 // 	defer srv.Close()
 //
 // 	client := &DiameterClient{

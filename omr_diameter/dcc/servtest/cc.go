@@ -1,4 +1,4 @@
-package dcc
+package servtest
 
 import (
 	"github.com/fiorix/go-diameter/diam"

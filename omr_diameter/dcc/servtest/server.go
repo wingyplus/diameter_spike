@@ -1,4 +1,4 @@
-package dcc
+package servtest
 
 import (
 	"bytes"
@@ -12,14 +12,14 @@ import (
 	"github.com/wingyplus/diameter_spike/diameter/dictionary"
 )
 
-type server struct {
+type Server struct {
 	*diamtest.Server
 
 	conn  diam.Conn
 	dwach chan struct{}
 }
 
-func (s *server) sendDWR() error {
+func (s *Server) sendDWR() error {
 	var appID uint32
 	watchdogExchange := uint32(280)
 
@@ -30,17 +30,17 @@ func (s *server) sendDWR() error {
 	return err
 }
 
-func (s *server) ReceiveDWA() chan struct{} {
+func (s *Server) ReceiveDWA() chan struct{} {
 	return s.dwach
 }
 
-func newServer() (*server, chan error) {
+func NewServer() (*Server, chan error) {
 	errc := make(chan error, 1)
 
 	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
 	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
 
-	serv := &server{
+	serv := &Server{
 		dwach: make(chan struct{}),
 	}
 

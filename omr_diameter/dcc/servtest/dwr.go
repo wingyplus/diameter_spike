@@ -1,4 +1,4 @@
-package dcc
+package servtest
 
 import (
 	"io"
