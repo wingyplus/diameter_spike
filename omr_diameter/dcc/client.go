@@ -14,7 +14,7 @@ import (
 	"github.com/wingyplus/diameter_spike/diameter/dictionary"
 )
 
-var in chan Request = make(chan Request)
+var in = make(chan Request)
 
 type DiameterClient struct {
 	Endpoint string
@@ -99,12 +99,7 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 }
 
 func sendCER(conn diam.Conn, cfg *sm.Settings) error {
-	var (
-		capabilitiesExchange uint32 = 257
-		appID                uint32
-	)
-
-	m := diam.NewRequest(capabilitiesExchange, appID, nil)
+	m := diam.NewRequest(CapabilitiesExchange, AppID, nil)
 
 	m.NewAVP(avp.OriginHost, avp.Mbit, 0, cfg.OriginHost)
 	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
@@ -124,11 +119,7 @@ func sendCER(conn diam.Conn, cfg *sm.Settings) error {
 }
 
 func sendDWR(conn diam.Conn, cfg *sm.Settings) error {
-	var (
-		wathdogExchange uint32 = 280
-		appID           uint32 = 0
-	)
-	m := diam.NewRequest(wathdogExchange, appID, nil)
+	m := diam.NewRequest(WatchdogExchange, AppID, nil)
 	m.NewAVP(avp.OriginHost, avp.Mbit, 0, cfg.OriginHost)
 	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, cfg.OriginRealm)
 
