@@ -13,16 +13,16 @@ type Balancer interface {
 }
 
 type DiamResponse struct {
-	SessionID          string `avp:"Session-Id"`
-	ServiceInformation ServiceInformation
+	SessionID          string             `avp:"Session-Id"`
+	ServiceInformation ServiceInformation `avp:"Service-Information"`
 }
 
 type ServiceInformation struct {
-	BalanceInformation BalanceInformation
+	BalanceInformation BalanceInformation `avp:"Balance-Information"`
 }
 
 type BalanceInformation struct {
-	FirstActiveDate string `json:"firstActiveDate"`
+	FirstActiveDate string `json:"firstActiveDate" avp:"First-Active-Date"`
 }
 
 type QueryBalancer struct{}
