@@ -1,29 +1,13 @@
 package dcc
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
 	"github.com/fiorix/go-diameter/diam"
-	"github.com/fiorix/go-diameter/diam/diamtest"
-	"github.com/fiorix/go-diameter/diam/dict"
-	"github.com/wingyplus/diameter_spike/diameter/dictionary"
 )
 
-func newServer() (*diamtest.Server, chan error) {
-	errc := make(chan error, 1)
-
-	dict.Default.Load(bytes.NewBufferString(dictionary.AppDictionary))
-	dict.Default.Load(bytes.NewBufferString(dictionary.CreditControlDictionary))
-
-	smux := diam.NewServeMux()
-	smux.Handle("CER", serverHandleCER(errc))
-	smux.Handle("CCR", serverHandleCCR(errc))
-	smux.Handle("DWR", serverHandleDWR(errc))
-
-	return diamtest.NewServer(smux, dict.Default), errc
-}
+var dwach = make(chan *diam.Message)
 
 func TestClientCallCERAndDWR(t *testing.T) {
 	srv, errc := newServer()
@@ -90,3 +74,32 @@ func TestClientCallCCR(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+// TODO: DWR has a problem, It's hangup when server send DWR and client send DWA back.
+//
+// func TestClient_DWR(t *testing.T) {
+// 	srv, errc := newServer()
+// 	defer srv.Close()
+//
+// 	client := &DiameterClient{
+// 		Endpoint: srv.Address,
+// 	}
+// 	done, err := client.Run()
+// 	if err != nil {
+// 		t.Error("Cannot connect to server")
+// 		return
+// 	}
+// 	select {
+// 	case err := <-errc:
+// 		t.Error(err)
+// 		return
+// 	case <-done:
+// 	}
+//
+// 	err = srv.sendDWR()
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	<-done
+// 	<-srv.ReceiveDWA()
+// }

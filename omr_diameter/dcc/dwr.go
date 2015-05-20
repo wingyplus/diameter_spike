@@ -22,14 +22,14 @@ func serverHandleDWR(errc chan error) diam.HandlerFunc {
 		}
 
 		a := m.Answer(diam.Success)
-		_, err = sendDWA(c, a)
+		_, err = serverSendDWA(c, a)
 		if err != nil {
 			errc <- err
 		}
 	}
 }
 
-func sendDWA(w io.Writer, m *diam.Message) (int64, error) {
+func serverSendDWA(w io.Writer, m *diam.Message) (int64, error) {
 	m.NewAVP(avp.OriginHost, avp.Mbit, 0, datatype.OctetString("srv"))
 	m.NewAVP(avp.OriginRealm, avp.Mbit, 0, datatype.OctetString("localhost"))
 

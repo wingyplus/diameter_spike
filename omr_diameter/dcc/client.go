@@ -65,6 +65,7 @@ func (client *DiameterClient) Run() (chan struct{}, error) {
 	smux.Handle("CEA", handleCEA(done))
 	smux.Handle("DWA", handleDWA(done))
 	smux.Handle("CCA", handleCCA(ccadone))
+	smux.HandleFunc("DWR", handleDWR(done))
 
 	conn, err := diam.Dial(client.Endpoint, smux, nil)
 	if err != nil {
@@ -143,6 +144,22 @@ func handleCEA(done chan struct{}) diam.HandlerFunc {
 
 func handleDWA(done chan struct{}) diam.HandlerFunc {
 	return func(conn diam.Conn, m *diam.Message) {
+		done <- struct{}{}
+	}
+}
+
+func handleDWR(done chan struct{}) diam.HandlerFunc {
+	return func(conn diam.Conn, m *diam.Message) {
+		fmt.Println("handle dwr")
+		fmt.Println(m)
+
+		m.Answer(diam.Success)
+		m.NewAVP(avp.OriginHost, avp.Mbit, 0, datatype.OctetString("client"))
+		m.NewAVP(avp.OriginRealm, avp.Mbit, 0, datatype.OctetString("localhost"))
+
+		fmt.Println("send connection")
+		m.WriteTo(conn)
+		fmt.Println("after send connection")
 		done <- struct{}{}
 	}
 }

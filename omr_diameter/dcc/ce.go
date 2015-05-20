@@ -9,7 +9,7 @@ import (
 	"github.com/fiorix/go-diameter/diam/datatype"
 )
 
-func serverHandleCER(errc chan error) diam.HandlerFunc {
+func serverHandleCER(errc chan error, serv *server) diam.HandlerFunc {
 	type CER struct {
 		OriginHost        string    `avp:"Origin-Host"`
 		OriginRealm       string    `avp:"Origin-Realm"`
@@ -19,6 +19,8 @@ func serverHandleCER(errc chan error) diam.HandlerFunc {
 		AcctApplicationID *diam.AVP `avp:"Acct-Application-Id"`
 	}
 	return func(c diam.Conn, m *diam.Message) {
+		serv.conn = c
+
 		var req CER
 		err := m.Unmarshal(&req)
 		if err != nil {
